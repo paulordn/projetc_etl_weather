@@ -16,7 +16,8 @@ columns_name_to_rename = {
     "name": "city_name",
     "cod": "code",
     "coord.lon" : "longitude",
-    "main.temp": "temp",
+    "coord.lat" : "latitude",
+    "main.temp": "temperature",
     "main.feels_like": "feels_like",
     "main.temp_min": "temp_min",
     "main.temp_max": "temp_max",
@@ -27,11 +28,14 @@ columns_name_to_rename = {
     "wind.speed": "wind_speed",
     "wind.deg": "wind_deg",
     "wind.gust": "wind_gust",
-    "clouds.all": "clouds_all",
+    "clouds.all": "clouds",
+    "sys.type" : "sys_type",
+    "sys.id" : "sys_id",
     "sys.country": "country",
     "sys.sunrise": "sunrise",
     "sys.sunset": "sunset"
 }
+columns_to_normalize_datetime = ['datetime', 'sunrise', 'sunset']
 
 def create_dataframe(path_name:str) -> pd.DataFrame:
 
@@ -73,3 +77,24 @@ def drop_columns(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def rename_columns(df: pd.DataFrame, columns:dict[str, str]) -> pd.DataFrame:
+    logging.info(f"\n -> renomeando {len(columns_name)} colunas")
+    df = df.rename(columns=columns_name)
+    logging.info("Colunas renomeadas")
+    return df
+
+def normalize_datetime_columns(df : pd.DataFrame, columns_names:list[str]) -> pd.DataFrame: 
+    logging.info(f"\n Convertendo colunas para datetime : {columns_names}")
+    for name in columns_names:
+        df[name] = pd.to_datetime(df[name], unit='s', utc=True).dt.tz_convert('America/Sao_Paulo')
+    logging.info('Colunas convertidas para datetime\n')
+    return df
+
+def data_transformation():
+    print("Iniciando transformação")
+    df = create_dataframe(path_name)
+    df = normalize_weather_columns(df)
+    df = drop_columns(df, columns_name_to_drop)
+    df = rename_columns(df, columns_name_to_rename)
+    df = normalize_datetime_columns(df, columns_to_normalize_datetime)
+    logging.info("Transformação concluídas\n")
+    return df
